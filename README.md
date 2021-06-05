@@ -1,4 +1,4 @@
-# Chronic_kidney_disease_classifier-
+# Chronic_kidney_disease_classifier
 Detection of Chronic Kidney Disease using ML algorithms.
 Dataset used: https://archive.ics.uci.edu/ml/datasets/Chronic_Kidney_Disease
 The CKD dataset is based on clinical history, physical examinations, and laboratory tests.
