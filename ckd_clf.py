@@ -7,6 +7,7 @@ Created on Sat Jun  5 16:44:48 2021
 
 import pandas as pd
 import numpy as np
+from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -15,10 +16,11 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn import svm
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import cross_validate
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.datasets import make_classification
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.metrics import confusion_matrix, accuracy_score
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
 
 pd.set_option('display.max_columns', 25)
 pd.set_option('display.max_rows', None)
@@ -59,8 +61,6 @@ indexNamesOut = df[ (df['sod'] == "4.5") | (df['pot'] == "47") | (df['pot'] == "
 df.drop(indexNamesOut , inplace=True)
 df = df.reset_index()
 df = df.drop(columns='index')
-
-
 
 
 #deleting rows where nan values is greater than 6 
@@ -110,26 +110,15 @@ df_class = df[['class']]
 cont = pd.DataFrame(imputer_two.fit_transform(df_cont),columns = ['age','bp','bgr','bu','sc','sod','pot','hemo','pcv','wbcc','rbcc'])
 cat = pd.DataFrame(imputer_one.fit_transform(df_cat),columns =['sg','al','su','rbc','pc','pcc','ba','htn','dm','cad','appet','pe','ane'])
 
+
+
 result = pd.concat([cont, cat, df_class], axis=1)
-result.age = result.age.astype(int)
-result.bp = result.bp.astype(int)
-result.sg = result.sg.astype(int)
-result.al = result.al.astype(int)
-result.su = result.su.astype(int)
-result.rbc = result.rbc.astype(int)
-result.pc = result.pc.astype(int)
-result.pcc = result.pcc.astype(int)
-result.ba = result.ba.astype(int)
-result.htn = result.htn.astype(int)
-result.dm = result.dm.astype(int)
-result.cad = result.cad.astype(int)
-result.appet = result.appet.astype(int)
-result.pe = result.pe.astype(int)
-result.ane = result.ane.astype(int)
-result.wbcc = result.wbcc.astype(int)
-result.sod = result.sod.astype(int)
-result.bgr = result.bgr.astype(int)
-result.pcv = result.pcv.astype(int)
+for column in result:
+    if (column == 'bu' or column == 'sc' or column == 'pot' or column == 'hemo' or column == 'rbcc'):
+        pass
+    else:
+        result[column] = result[column].astype(int)
+
 
 #pearson correlation
 def correlation(data, col1, col2, xlim1, xlim2):
@@ -152,4 +141,84 @@ scaler = MinMaxScaler()
 df_norm = pd.DataFrame(scaler.fit_transform(df_normalize), columns=df_normalize.columns)
 
 df_res = pd.concat([df_not_normalize, df_norm], axis=1)
+
+#X_train, X_test, y_train, y_test splitting
+y=df_class.to_numpy().flatten()
+X=df_res.to_numpy()
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+#modeling SVM
+rbf_svc = svm.SVC(kernel='rbf', gamma=0.7, C=1)
+
+scores_rbf = cross_validate(rbf_svc, X, y, cv=5,scoring=['accuracy','precision','recall','f1'])
+print(scores_rbf)
+
+rbf_svc = rbf_svc.fit(X_train, y_train)
+y_pred = rbf_svc.predict(X_test)
+print(confusion_matrix(y_test,y_pred))
+print(rbf_svc.score(X_test, y_test))
+print(accuracy_score(y_test, y_pred))
+print(precision_score(y_test, y_pred)) 
+print(recall_score(y_test, y_pred))
+print(f1_score(y_test, y_pred))
+print(roc_auc_score(y_test, y_pred))
+tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+specificity = tn / (tn+fp)
+print(specificity)
+
+
+#modeling Random Forest
+rf_clf  = RandomForestClassifier(max_depth=3)
+scores_rf = cross_validate(rf_clf, X_train, y_train, cv=5,scoring=['accuracy','precision','recall','f1'])
+print(scores_rf)
+
+rf_clf=rf_clf.fit(X_train, y_train)
+y_pred = rf_clf.predict(X_test)
+
+print(confusion_matrix(y_test,y_pred))
+print(accuracy_score(y_test, y_pred))
+print(precision_score(y_test, y_pred)) 
+print(recall_score(y_test, y_pred))
+print(f1_score(y_test, y_pred))
+print(roc_auc_score(y_test, y_pred))
+tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+specificity = tn / (tn+fp)
+print(specificity)
+
+
+#modelin Logistic Regression
+
+lr_clf = LogisticRegression(penalty='l2',C=1000,max_iter=1000)
+scores_lr = cross_validate(lr_clf, X, y, cv=5,scoring=['accuracy','precision','recall','f1'])
+print(scores_lr)
+
+lr_clf=lr_clf.fit(X_train, y_train)
+y_pred = lr_clf.predict(X_test)
+
+print(accuracy_score(y_test, y_pred))
+print(precision_score(y_test, y_pred)) 
+print(recall_score(y_test, y_pred))
+print(f1_score(y_test, y_pred))
+print(roc_auc_score(y_test, y_pred))
+tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+specificity = tn / (tn+fp)
+print(specificity)
+
+#modeling Gradient Boosting
+
+gb_clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0, max_depth=2)
+scores_gb = cross_validate(gb_clf, X, y, cv=5,scoring=['accuracy','precision','recall','f1'])
+print(scores_gb)
+
+gb_clf = gb_clf.fit(X_train, y_train)
+y_pred = gb_clf.predict(X_test)
+
+print(accuracy_score(y_test, y_pred))
+print(precision_score(y_test, y_pred)) 
+print(recall_score(y_test, y_pred))
+print(f1_score(y_test, y_pred))
+print(roc_auc_score(y_test, y_pred))
+tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
+specificity = tn / (tn+fp)
+print(specificity)
 
