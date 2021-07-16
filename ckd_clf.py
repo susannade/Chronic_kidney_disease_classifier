@@ -150,8 +150,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 #modeling SVM
 rbf_svc = svm.SVC(kernel='rbf', gamma=0.7, C=1)
 
-scores_rbf = cross_validate(rbf_svc, X, y, cv=5,scoring=['accuracy','precision','recall','f1'])
-print(scores_rbf)
+scores_rbf = cross_validate(rbf_svc, X_train, y_train, cv=5,scoring=['accuracy','precision','recall','f1'])
+print("SVM c_v: ",scores_rbf)
 
 rbf_svc = rbf_svc.fit(X_train, y_train)
 y_pred = rbf_svc.predict(X_test)
@@ -170,7 +170,7 @@ print(specificity)
 #modeling Random Forest
 rf_clf  = RandomForestClassifier(max_depth=3)
 scores_rf = cross_validate(rf_clf, X_train, y_train, cv=5,scoring=['accuracy','precision','recall','f1'])
-print(scores_rf)
+print("RF c_v: ",scores_rf)
 
 rf_clf=rf_clf.fit(X_train, y_train)
 y_pred = rf_clf.predict(X_test)
@@ -189,8 +189,8 @@ print(specificity)
 #modelin Logistic Regression
 
 lr_clf = LogisticRegression(penalty='l2',C=1000,max_iter=1000)
-scores_lr = cross_validate(lr_clf, X, y, cv=5,scoring=['accuracy','precision','recall','f1'])
-print(scores_lr)
+scores_lr = cross_validate(lr_clf, X_train, y_train, cv=5,scoring=['accuracy','precision','recall','f1'])
+print("LR c_v: ",scores_lr)
 
 lr_clf=lr_clf.fit(X_train, y_train)
 y_pred = lr_clf.predict(X_test)
@@ -207,8 +207,8 @@ print(specificity)
 #modeling Gradient Boosting
 
 gb_clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0, max_depth=2)
-scores_gb = cross_validate(gb_clf, X, y, cv=5,scoring=['accuracy','precision','recall','f1'])
-print(scores_gb)
+scores_gb = cross_validate(gb_clf, X_train, y_train, cv=5,scoring=['accuracy','precision','recall','f1'])
+print("GB c_v: ",scores_gb)
 
 gb_clf = gb_clf.fit(X_train, y_train)
 y_pred = gb_clf.predict(X_test)
